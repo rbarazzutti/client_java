@@ -2,8 +2,10 @@ package io.prometheus.client.vertx;
 
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Gauge;
-import io.prometheus.client.vertx.MetricsHandler;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -13,6 +15,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,7 +27,10 @@ public class MetricsHandlerTest {
   private static CollectorRegistry registry;
 
   @BeforeClass
-  public static void setUp() throws IOException {
+  public static void setUp() throws Throwable {
+    ReentrantLock lock=new ReentrantLock();
+
+
     vertx = Vertx.vertx();
     final Vertx vertx = Vertx.vertx();
     final Router router = Router.router(vertx);
@@ -34,7 +41,11 @@ public class MetricsHandlerTest {
     ServerSocket socket = new ServerSocket(0);
     port = socket.getLocalPort();
     socket.close();
-    vertx.createHttpServer().requestHandler(router::accept).listen(port);
+    lock.lock();
+    vertx.createHttpServer().requestHandler(router::accept).listen(port, event -> lock.unlock());
+
+    lock.tryLock(10, TimeUnit.SECONDS);
+
 
     Gauge.build("a", "a help").register(registry);
     Gauge.build("b", "b help").register(registry);
