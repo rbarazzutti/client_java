@@ -4,5 +4,5 @@ jdk:
   - oraclejdk8
 
 script:
-- ./mvnw -pl simpleclient_vertx test # TEMP, only test vertx with travis
+- ./mvnw test
 - ./mvnw javadoc:aggregate
