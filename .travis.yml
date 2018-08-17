@@ -4,5 +4,7 @@ jdk:
   - oraclejdk8
 
 script:
-- ./mvnw test
-- ./mvnw javadoc:aggregate
+- ./mvnw -pl simpleclient install
+- ./mvnw -pl simpleclient_common install
+- ./mvnw -pl simpleclient_vertx test
+#- ./mvnw javadoc:aggregate
