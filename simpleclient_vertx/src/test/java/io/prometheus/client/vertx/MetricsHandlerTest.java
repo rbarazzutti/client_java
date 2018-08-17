@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.util.Scanner;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -38,17 +39,22 @@ public class MetricsHandlerTest {
     registry = new CollectorRegistry();
     router.route("/metrics").handler(new MetricsHandler(registry));
 
+    router.route("/test").handler(routingContext -> {
+      routingContext.response().putHeader("content-type", "text").end("Hello World!");
+    });
+
     ServerSocket socket = new ServerSocket(0);
     port = socket.getLocalPort();
     socket.close();
     lock.lock();
+    Semaphore s=new Semaphore(1);
+    s.acquire();
     vertx.createHttpServer().requestHandler(router::accept).listen(port,
-            event -> lock.unlock()
+            event -> s.release()
     );
 
-    lock.tryLock(10, TimeUnit.SECONDS);
-
-Thread.sleep(10000);
+//    s.tryAcquire(100, TimeUnit.MILLISECONDS);
+s.acquire();
     Gauge.build("a", "a help").register(registry);
     Gauge.build("b", "b help").register(registry);
     Gauge.build("c", "c help").register(registry);
