@@ -5,6 +5,7 @@ import io.prometheus.client.Gauge;
 import io.prometheus.client.vertx.MetricsHandler;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
+import io.vertx.junit5.VertxTestContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,7 +25,9 @@ public class MetricsHandlerTest {
   private static CollectorRegistry registry;
 
   @BeforeClass
-  public static void setUp() throws IOException {
+  public static void setUp() throws Throwable {
+    VertxTestContext testContext = new VertxTestContext();
+
     vertx = Vertx.vertx();
     final Vertx vertx = Vertx.vertx();
     final Router router = Router.router(vertx);
@@ -34,7 +38,12 @@ public class MetricsHandlerTest {
     ServerSocket socket = new ServerSocket(0);
     port = socket.getLocalPort();
     socket.close();
-    vertx.createHttpServer().requestHandler(router::accept).listen(port);
+    vertx.createHttpServer().requestHandler(router::accept).listen(port, testContext.succeeding(ar -> testContext.completeNow()));
+
+    assertThat(testContext.awaitCompletion(5, TimeUnit.SECONDS)).isTrue();
+    if (testContext.failed()) {
+      throw testContext.causeOfFailure();
+    }
 
     Gauge.build("a", "a help").register(registry);
     Gauge.build("b", "b help").register(registry);
