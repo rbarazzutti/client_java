@@ -42,11 +42,13 @@ public class MetricsHandlerTest {
     port = socket.getLocalPort();
     socket.close();
     lock.lock();
-    vertx.createHttpServer().requestHandler(router::accept).listen(port, event -> lock.unlock());
+    vertx.createHttpServer().requestHandler(router::accept).listen(port,
+            event -> lock.unlock()
+    );
 
     lock.tryLock(10, TimeUnit.SECONDS);
 
-
+Thread.sleep(10000);
     Gauge.build("a", "a help").register(registry);
     Gauge.build("b", "b help").register(registry);
     Gauge.build("c", "c help").register(registry);
