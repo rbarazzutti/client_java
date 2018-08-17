@@ -29,7 +29,7 @@ public class MetricsHandlerTest {
 
   @BeforeClass
   public static void setUp() throws Throwable {
-    ReentrantLock lock=new ReentrantLock();
+    Semaphore s = new Semaphore(1);
 
 
     vertx = Vertx.vertx();
@@ -46,15 +46,14 @@ public class MetricsHandlerTest {
     ServerSocket socket = new ServerSocket(0);
     port = socket.getLocalPort();
     socket.close();
-    lock.lock();
-    Semaphore s=new Semaphore(1);
+
     s.acquire();
     vertx.createHttpServer().requestHandler(router::accept).listen(port,
             event -> s.release()
     );
 
-//    s.tryAcquire(100, TimeUnit.MILLISECONDS);
-s.acquire();
+    s.tryAcquire(10, TimeUnit.SECONDS);
+
     Gauge.build("a", "a help").register(registry);
     Gauge.build("b", "b help").register(registry);
     Gauge.build("c", "c help").register(registry);

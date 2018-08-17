@@ -1,8 +1,11 @@
 language: java
+cache:
+  directories:
+  - $HOME/.m2
 
 jdk:
   - oraclejdk8
 
 script:
-- ./mvnw test
-- ./mvnw javadoc:aggregate
+- ./mvnw -pl simpleclient_vertx test
+#- ./mvnw javadoc:aggregate
